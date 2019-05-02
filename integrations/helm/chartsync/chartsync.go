@@ -409,6 +409,20 @@ func (chs *ChartChangeSync) reconcileReleaseDef(fhr fluxv1beta1.HelmRelease) {
 	}
 }
 
+// RollbackRelease rolls back a helm release
+func (chs *ChartChangeSync) RollbackRelease(fhr fluxv1beta1.HelmRelease) {
+	if !fhr.Spec.Rollback.Enable {
+		return
+	}
+
+	name := release.GetReleaseName(fhr)
+	err := chs.release.Rollback(name, fhr.Spec.Rollback.GetTimeout(), fhr.Spec.Rollback.Force,
+		fhr.Spec.Rollback.Recreate, fhr.Spec.Rollback.DisableHooks, fhr.Spec.Rollback.Wait)
+	if err != nil {
+		chs.logger.Log("warning", "unable to rollback chart release", "resource", fhr.ResourceID().String(), "release", name, "err", err)
+	}
+}
+
 // DeleteRelease deletes the helm release associated with a
 // HelmRelease. This exists mainly so that the operator code can
 // call it when it is handling a resource deletion.

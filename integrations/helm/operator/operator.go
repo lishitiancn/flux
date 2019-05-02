@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/helm/pkg/proto/hapi/release"
 
 	flux_v1beta1 "github.com/weaveworks/flux/integrations/apis/flux.weave.works/v1beta1"
 	ifscheme "github.com/weaveworks/flux/integrations/client/clientset/versioned/scheme"
@@ -233,6 +234,12 @@ func (c *Controller) syncHandler(key string) error {
 		return err
 	}
 
+	// Attempt a rollback if the release status is FAILED.
+	if fhr.Status.ReleaseStatus == release.Status_FAILED.String() {
+		c.sync.RollbackRelease(*fhr)
+		return nil
+	}
+
 	c.sync.ReconcileReleaseDef(*fhr)
 	c.recorder.Event(fhr, corev1.EventTypeNormal, ChartSynced, MessageChartSynced)
 	return nil
@@ -280,6 +287,16 @@ func (c *Controller) enqueueUpdateJob(old, new interface{}) {
 	newFhr, ok := checkCustomResourceType(c.logger, new)
 	if !ok {
 		return
+	}
+
+	// Enqueue rollback if the status of the release has changed to
+	// FAILED, and rollbacks for this HelmRelease are enabled.
+	if oldFhr.Status.ReleaseStatus != newFhr.Status.ReleaseStatus {
+		if newFhr.Spec.Rollback.Enable && newFhr.Status.ReleaseStatus == release.Status_FAILED.String() {
+			c.logger.Log("info", "enqueing rollback", "resource", newFhr.ResourceID().String())
+			c.enqueueJob(new)
+			return
+		}
 	}
 
 	diff := cmp.Diff(oldFhr.Spec, newFhr.Spec)

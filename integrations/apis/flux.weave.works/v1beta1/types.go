@@ -103,6 +103,22 @@ func (s RepoChartSource) CleanRepoURL() string {
 	return cleanURL + "/"
 }
 
+type Rollback struct {
+	Enable 		 bool 	`json:"enable,omitempty"`
+	Force  		 bool 	`json:"force,omitempty"`
+	Recreate 	 bool 	`json:"recreate,omitempty"`
+	DisableHooks bool 	`json:"disableHooks,omitempty"`
+	Timeout 	 *int64 `json:"timeout,omitempty"`
+	Wait 		 bool   `json:"wait,omitempty"`
+}
+
+func (r Rollback) GetTimeout() int64 {
+	if r.Timeout == nil {
+		return 300
+	}
+	return *r.Timeout
+}
+
 // HelmReleaseSpec is the spec for a HelmRelease resource
 type HelmReleaseSpec struct {
 	ChartSource      `json:"chart"`
@@ -119,6 +135,9 @@ type HelmReleaseSpec struct {
 	// Force resource update through delete/recreate, allows recovery from a failed state
 	// +optional
 	ForceUpgrade bool `json:"forceUpgrade,omitempty"`
+	// Enable automatic rollbacks
+	// +optional
+	Rollback Rollback `json:"rollback,omitempty"`
 }
 
 // GetTimeout returns the install or upgrade timeout (defaults to 300s)
