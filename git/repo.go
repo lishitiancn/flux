@@ -208,6 +208,16 @@ func (r *Repo) Revision(ctx context.Context, ref string) (string, error) {
 	return refRevision(ctx, r.dir, ref)
 }
 
+// BranchHead returns the HEAD revision (SHA1) of the configured branch
+func (r *Repo) BranchHead(ctx context.Context) (string, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if err := r.errorIfNotReady(); err != nil {
+		return "", err
+	}
+	return refRevision(ctx, r.dir, "heads/"+r.branch)
+}
+
 func (r *Repo) CommitsBefore(ctx context.Context, ref string, paths ...string) ([]Commit, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
