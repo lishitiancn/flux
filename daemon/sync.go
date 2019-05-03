@@ -31,7 +31,7 @@ type Sync struct {
 
 type SyncTag interface {
 	Revision() string
-	SetRevision(oldRev, NewRev string)
+	SetRevision(oldRev, newRev string)
 }
 
 type eventLogger interface {

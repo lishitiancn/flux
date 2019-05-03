@@ -775,7 +775,9 @@ func policyEventTypes(u policy.Update) []string {
 // is not. Signature validation happens for commits between the sync
 // tag revision and the HEAD, after the signature of the sync tag
 // itself has been validated, as the branch can not be trusted when
-// the tag originates from an unknown source.
+// the tag originates from an unknown source. In case the signature
+// of the tag can not be verified, or it points towards a revision
+// we can not get a commit range for, it returns an error.
 func latestValidRevision(ctx context.Context, repo *git.Repo, gitConfig git.Config) (string, git.Commit, error) {
 	var invalidCommit = git.Commit{}
 	newRevision, err := repo.Revision(ctx, "heads/"+gitConfig.Branch)

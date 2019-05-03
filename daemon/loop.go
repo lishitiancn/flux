@@ -163,7 +163,7 @@ func (s *lastKnownSyncTag) Revision() string {
 
 func (s *lastKnownSyncTag) SetRevision(oldRev, newRev string) {
 	// Check if something other than the current instance of fluxd
-	// changed the sync tag. This is likely caused by another instace
+	// changed the sync tag. This is likely caused by another instance
 	// using the same tag. Having multiple instances fight for the same
 	// tag can lead to fluxd missing manifest changes.
 	if s.revision != "" && oldRev != s.revision && !s.warnedAboutChange {

@@ -121,7 +121,7 @@ func main() {
 		// GPG commit signing
 		gitImportGPG        = fs.StringSlice("git-gpg-key-import", []string{}, "keys at the paths given will be imported for use of signing and verifying commits")
 		gitSigningKey       = fs.String("git-signing-key", "", "if set, commits Flux makes will be signed with this GPG key")
-		gitVerifySignatures = fs.Bool("git-verify-signatures", false, "if set, the signatue of commits will be verified before Flux applies them")
+		gitVerifySignatures = fs.Bool("git-verify-signatures", false, "if set, the signature of commits will be verified before Flux applies them")
 
 		// syncing
 		syncInterval = fs.Duration("sync-interval", 5*time.Minute, "apply config in git to cluster at least this often, even if there are no new commits")
