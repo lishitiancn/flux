@@ -236,6 +236,9 @@ func (d *Daemon) makeJobFromUpdate(update updateFunc) jobFunc {
 		var result job.Result
 		err := d.WithClone(ctx, func(working *git.Checkout) error {
 			var err error
+			if err = verifyWorkingRepo(ctx, d.Repo, working, d.GitConfig); err != nil {
+				return err
+			}
 			result, err = update(ctx, jobID, working, logger)
 			if err != nil {
 				return err
@@ -432,10 +435,6 @@ func (d *Daemon) updatePolicy(spec update.Spec, updates policy.Updates) updateFu
 			return result, nil
 		}
 
-		if err := verifyWorkingRepo(ctx, d.Repo, working, d.GitConfig); err != nil {
-			return result, err
-		}
-
 		commitAuthor := ""
 		if d.GitConfig.SetAuthor {
 			commitAuthor = spec.Cause.User
@@ -477,10 +476,6 @@ func (d *Daemon) release(spec update.Spec, c release.Changes) updateFunc {
 		var revision string
 
 		if c.ReleaseKind() == update.ReleaseKindExecute {
-			if err := verifyWorkingRepo(ctx, d.Repo, working, d.GitConfig); err != nil {
-				return zero, err
-			}
-
 			commitMsg := spec.Cause.Message
 			if commitMsg == "" {
 				commitMsg = c.CommitMessage(result)
@@ -831,10 +826,7 @@ func verifyWorkingRepo(ctx context.Context, repo *git.Repo, working *git.Checkou
 	} else if headRev, err := working.HeadRevision(ctx); err != nil {
 		return err
 	} else if headRev != latestVerifiedRev {
-		return fmt.Errorf(`HEAD is not a verified commit.
-
-The branch HEAD in the git repo is not verified, and fluxd is unable to make a change on top of it.
-The last verified commit was %.8s. HEAD is %.8s.`, latestVerifiedRev, headRev)
+		return unsignedHeadRevisionError(latestVerifiedRev, headRev)
 	}
 	return nil
 }
